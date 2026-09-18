@@ -1,0 +1,276 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'DM Sans', sans-serif;
+  --color-canvas: #252831;
+  --color-panel: #191b20;
+  --color-muted: #a4a7b1;
+  --color-accent: #1dce57;
+  --color-expense: #ffc21a;
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+  body {
+    @apply m-0 bg-panel font-sans text-gray-100 antialiased;
+  }
+  button {
+    @apply cursor-pointer disabled:cursor-not-allowed disabled:opacity-45;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible {
+    @apply outline-2 outline-offset-4 outline-accent;
+  }
+}
+
+@layer components {
+  .metric-card {
+    @apply flex items-center gap-4 rounded-2xl bg-panel p-5;
+  }
+  .chart-empty {
+    @apply flex h-72 items-center justify-center px-6 text-center text-sm text-muted;
+  }
+  .filter-input {
+    @apply w-full rounded-lg border border-[#3c414c] bg-canvas px-3 py-3 text-sm text-gray-100 placeholder:text-muted;
+    color-scheme: dark;
+  }
+  .filter-label {
+    @apply flex flex-col gap-2 text-xs text-muted;
+  }
+  .export-dialog {
+    @apply fixed m-auto max-h-[90dvh] w-[min(780px,94vw)] overflow-y-auto rounded-2xl border border-white/15 bg-panel p-6 text-gray-100 shadow-2xl md:p-8;
+  }
+  .export-dialog::backdrop {
+    background: #080a10bb;
+    backdrop-filter: blur(5px);
+  }
+  .brand {
+    @apply inline-flex items-center gap-2.5 text-4xl font-bold tracking-tighter;
+  }
+  .brand-mark {
+    @apply grid h-10 w-9 place-items-center rounded-lg border-3 border-accent border-t-expense text-xl text-accent;
+  }
+  .brand-dot {
+    @apply -ml-2 text-accent;
+  }
+  .eyebrow {
+    @apply text-[11px] font-bold tracking-[2px] text-accent;
+  }
+  .muted {
+    @apply text-sm leading-relaxed text-muted;
+  }
+  .login-layout {
+    @apply grid min-h-dvh md:grid-cols-2;
+  }
+  .login-story {
+    @apply flex flex-col justify-between gap-16 border-r border-white/10 p-6 md:px-[14%] md:py-12;
+    background:
+      radial-gradient(ellipse at 20% 65%, #20382b 0%, transparent 55%), var(--color-panel);
+  }
+  .login-story h1 {
+    @apply mt-6 text-4xl leading-tight tracking-tighter xl:text-6xl;
+  }
+  .login-story h1 span {
+    @apply text-[#a7b3aa];
+  }
+  .story-copy {
+    @apply mt-6 max-w-sm text-[15px] leading-loose text-[#a4aea7];
+  }
+  .story-footer {
+    @apply text-xs text-[#858d89];
+  }
+  .story-graphic {
+    @apply mt-11 flex h-36 max-w-sm items-end gap-3.5 border-b border-[#3a5141];
+  }
+  .story-graphic span {
+    @apply h-[35%] flex-1 rounded-t-lg bg-linear-to-t from-accent/20 to-accent;
+  }
+  .story-graphic span:nth-child(2) {
+    @apply h-[52%];
+  }
+  .story-graphic span:nth-child(3) {
+    @apply h-[42%];
+  }
+  .story-graphic span:nth-child(4) {
+    @apply h-[70%];
+  }
+  .story-graphic span:nth-child(5) {
+    @apply h-[60%];
+  }
+  .story-graphic span:nth-child(6) {
+    @apply h-[82%];
+  }
+  .story-graphic span:nth-child(7) {
+    @apply h-[74%];
+  }
+  .story-graphic span:nth-child(8) {
+    @apply h-full from-expense/20 to-expense;
+  }
+  .login-panel {
+    @apply grid place-items-center bg-[#22252c] px-6 py-12 md:px-8;
+  }
+  .login-form-wrap {
+    @apply w-full max-w-[380px];
+  }
+  .login-icon {
+    @apply mb-8 grid size-14 place-items-center rounded-2xl bg-accent/10 text-accent;
+  }
+  .login-form-wrap h2 {
+    @apply my-3 text-[28px] font-semibold tracking-tight;
+  }
+  .login-form-wrap form {
+    @apply mt-9 flex flex-col;
+  }
+  .login-form-wrap label {
+    @apply mb-2 text-[13px] font-medium;
+  }
+  .login-form-wrap input {
+    @apply mb-6 w-full rounded-lg border border-[#393d47] bg-[#191c22] px-4 py-3.5 text-white placeholder:text-[#878d99];
+  }
+  .primary {
+    @apply flex items-center justify-between rounded-lg bg-accent px-5 py-3.5 font-bold text-[#102018] hover:bg-[#3cdc70];
+  }
+  .login-note {
+    @apply mt-7 flex items-center justify-center gap-2 text-[11px] text-muted;
+  }
+  .alert,
+  .connection-alert {
+    @apply mb-5 rounded-lg border border-[#79414c] bg-[#42292e] px-4 py-3 text-[13px] leading-relaxed text-[#ffccd3];
+  }
+  .connection-alert {
+    @apply m-0 rounded-none text-center;
+  }
+  .boot {
+    @apply grid min-h-dvh place-content-center gap-6 text-muted;
+  }
+  .workspace {
+    @apply flex min-h-dvh;
+  }
+  .sidebar {
+    @apply hidden w-48 shrink-0 flex-col px-5 py-9 md:flex xl:w-60 xl:px-7;
+  }
+  .sidebar nav {
+    @apply mt-16;
+  }
+  .nav-active {
+    @apply flex items-center gap-4 text-sm font-semibold text-accent;
+  }
+  .sidebar-bottom {
+    @apply mt-auto flex items-center gap-2.5 pt-8;
+  }
+  .sidebar-bottom strong {
+    @apply block text-xs;
+  }
+  .sidebar-bottom div > span {
+    @apply mt-1 block text-[10px] text-muted;
+  }
+  .avatar {
+    @apply inline-grid size-10 shrink-0 place-items-center rounded-xl bg-[#303d39] text-xs font-semibold text-[#9feab5];
+  }
+  .workspace-main {
+    @apply min-w-0 flex-1 bg-canvas;
+  }
+  .workspace header {
+    @apply flex h-20 items-center justify-between bg-panel px-5 md:h-24 md:px-9;
+  }
+  .workspace header h1 {
+    @apply text-2xl font-semibold tracking-tight;
+  }
+  .secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-[#424650] bg-[#292d35] px-3 py-2.5 text-xs text-[#e3e5e9] enabled:hover:bg-[#343943];
+  }
+  .dashboard-content {
+    @apply px-4 py-6 md:p-6 xl:p-9;
+  }
+  .page-intro {
+    @apply mb-7 flex flex-col items-start justify-between gap-5 xl:flex-row xl:items-center;
+  }
+  .page-intro h2 {
+    @apply my-2 text-[28px] font-semibold tracking-tight;
+  }
+  .period {
+    @apply whitespace-nowrap rounded-lg border border-[#41464f] px-4 py-3 text-xs text-[#c0c3cb];
+  }
+  .panel {
+    @apply rounded-2xl bg-panel p-4 md:p-5 xl:p-7;
+  }
+  .panel-title {
+    @apply mb-7 flex items-center justify-between gap-4;
+  }
+  .panel-title h3 {
+    @apply mb-1.5 text-[22px] font-semibold;
+  }
+  .status-label {
+    @apply hidden text-[11px] text-[#a6dcb5] md:inline;
+  }
+  .table-scroll {
+    @apply overflow-x-auto;
+  }
+  table {
+    @apply w-full border-collapse whitespace-nowrap text-[13px];
+  }
+  thead {
+    @apply bg-[#272b34] text-left text-[#b3afcc];
+  }
+  th {
+    @apply px-3.5 py-4 font-medium first:rounded-l-lg last:rounded-r-lg;
+  }
+  td {
+    @apply border-b border-[#2b2e36] px-3.5 py-4 text-[#d5d8df];
+  }
+  .user-cell {
+    @apply flex items-center gap-3;
+  }
+  .user-cell small {
+    @apply mt-1 block text-[10px] text-[#989eaa];
+  }
+  .numeric {
+    @apply text-right tabular-nums;
+  }
+  .amount {
+    @apply font-semibold;
+  }
+  .revenue {
+    @apply text-accent;
+  }
+  .expense {
+    @apply text-expense;
+  }
+  .category {
+    @apply flex items-center gap-1.5 text-xs;
+  }
+  .badge {
+    @apply inline-block rounded-full px-3 py-1 text-[11px] font-semibold;
+  }
+  .paid {
+    @apply bg-[#194f30] text-[#63ed89];
+  }
+  .pending {
+    @apply bg-[#58471c] text-[#ffda60];
+  }
+  .pagination {
+    @apply flex items-center justify-between pt-6 text-xs text-muted;
+  }
+  .pagination div {
+    @apply flex gap-2;
+  }
+  .table-message {
+    @apply h-40 text-center text-muted;
+  }
+  .text-button {
+    @apply bg-transparent text-[#ffccd3] underline;
+  }
+}
+
+@media (width < 48rem) {
+  .login-story > div,
+  .story-footer {
+    display: none;
+  }
+  .login-panel {
+    min-height: calc(100dvh - 88px);
+  }
+}

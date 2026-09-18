@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+*.log
+tmp/
+.DS_Store
+*.tsbuildinfo
+playwright-report/
+test-results/
+
+release/
+/full-stack assignment (1).pdf

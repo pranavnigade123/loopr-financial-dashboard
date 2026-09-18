@@ -1,0 +1,26 @@
+{
+  "name": "@loopr/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/server.js",
+    "seed": "tsx src/db/seed.ts"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.1.2",
+    "@fastify/helmet": "^13.1.1",
+    "@fastify/jwt": "^10.2.2",
+    "@fastify/rate-limit": "^11.2.0",
+    "@fastify/static": "^10.1.4",
+    "@loopr/contracts": "0.1.0",
+    "csv-stringify": "^6.8.3",
+    "dotenv": "^18.0.0",
+    "fastify": "^5.12.5",
+    "mongodb": "^6.21.0",
+    "zod": "^4.6.5"
+  }
+}

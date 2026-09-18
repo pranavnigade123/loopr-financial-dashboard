@@ -1,0 +1,3 @@
+* text=auto eol=lf
+# Preserve the supplied dataset's formatting without whitespace warnings.
+data/transactions.json -whitespace

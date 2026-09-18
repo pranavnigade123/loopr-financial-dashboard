@@ -1,0 +1,9 @@
+node_modules
+dist
+coverage
+tmp
+package-lock.json
+data/transactions.json
+*.pdf
+
+release/

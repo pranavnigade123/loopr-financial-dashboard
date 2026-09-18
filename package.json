@@ -1,0 +1,38 @@
+{
+  "name": "loopr-finance",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "dev": "npm run build -w @loopr/contracts && concurrently -k -n contracts,api,web \"npm run dev -w @loopr/contracts\" \"npm run dev -w @loopr/api\" \"npm run dev -w @loopr/web\"",
+    "build": "npm run build -w @loopr/contracts && npm run build -w @loopr/api && npm run build -w @loopr/web",
+    "typecheck": "npm run build -w @loopr/contracts && npm run typecheck --workspaces --if-present",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "npm run build -w @loopr/contracts && vitest run tests/unit",
+    "seed": "npm run build -w @loopr/contracts && npm run seed -w @loopr/api",
+    "start": "npm run start -w @loopr/api",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build",
+    "test:integration": "npm run build -w @loopr/contracts && vitest run tests/integration"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/node": "^22.20.3",
+    "concurrently": "^10.0.5",
+    "eslint": "^10.10.0",
+    "globals": "^17.12.0",
+    "prettier": "^3.9.8",
+    "tsx": "^4.23.13",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.0",
+    "vitest": "^5.0.1"
+  }
+}
