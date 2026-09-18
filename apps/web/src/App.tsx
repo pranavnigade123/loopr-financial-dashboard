@@ -25,7 +25,7 @@ export function App() {
   }, []);
   if (checking)
     return (
-      <main className="boot" role="status">
+      <main className="grid min-h-dvh place-content-center gap-6 text-muted" role="status">
         <Brand />
         <p>Opening your workspace…</p>
       </main>
@@ -35,7 +35,10 @@ export function App() {
   ) : (
     <>
       {error && (
-        <div className="connection-alert" role="status">
+        <div
+          className="rounded-none border border-[#79414c] bg-[#42292e] px-4 py-3 text-center text-[13px] text-[#ffccd3]"
+          role="status"
+        >
           {error}
         </div>
       )}

@@ -13,3 +13,8 @@ test-results/
 
 release/
 /full-stack assignment (1).pdf
+
+# Personal reference documents (keep local)
+/docs/verification.md
+/docs/plan.md
+/docs/deployment.md

@@ -23,7 +23,13 @@ const tooltipStyle = {
   color: '#f4f5f7',
 };
 
-export function TrendChart({ analytics }: { analytics: Analytics }) {
+export function TrendChart({
+  analytics,
+  hideLegend = false,
+}: {
+  analytics: Analytics;
+  hideLegend?: boolean;
+}) {
   const byMonth = new Map(analytics.monthly.map((point) => [point.month, point]));
   const points: Analytics['monthly'] = [];
   const first = analytics.monthly[0]?.month;
@@ -37,7 +43,11 @@ export function TrendChart({ analytics }: { analytics: Analytics }) {
     }
   }
   if (!analytics.paidRevenueMinor && !analytics.paidExpenseMinor)
-    return <div className="chart-empty">No paid activity matches these filters.</div>;
+    return (
+      <div className="flex h-72 items-center justify-center px-6 text-center text-sm text-muted">
+        No paid activity matches these filters.
+      </div>
+    );
   return (
     <div
       className="h-72 w-full min-w-0"
@@ -78,12 +88,14 @@ export function TrendChart({ analytics }: { analytics: Analytics }) {
             formatter={(value) => money(Number(value))}
             labelFormatter={(label) => `Month: ${label}`}
           />
-          <Legend
-            verticalAlign="top"
-            align="right"
-            iconType="circle"
-            wrapperStyle={{ fontSize: 12, paddingBottom: 20 }}
-          />
+          {!hideLegend && (
+            <Legend
+              verticalAlign="top"
+              align="right"
+              iconType="circle"
+              wrapperStyle={{ fontSize: 12, paddingBottom: 20 }}
+            />
+          )}
           <Line
             name="Revenue"
             type="linear"
@@ -116,7 +128,11 @@ export function CategoryChart({ analytics }: { analytics: Analytics }) {
     { name: 'Expense', value: analytics.paidExpenseMinor },
   ];
   if (!values.some((entry) => entry.value))
-    return <div className="chart-empty">No paid category totals to display.</div>;
+    return (
+      <div className="flex h-72 items-center justify-center px-6 text-center text-sm text-muted">
+        No paid category totals to display.
+      </div>
+    );
   return (
     <div className="flex flex-wrap items-center gap-6">
       <div

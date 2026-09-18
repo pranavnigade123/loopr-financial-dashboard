@@ -4,7 +4,7 @@ A TypeScript financial dashboard built for the Loopr assignment. One npm-workspa
 
 ## Current status
 
-The local application includes login/logout, revocable JWT sessions, repeatable sample-data seeding, financial charts and metrics, server-side filtering/search/sorting/pagination, and configurable CSV downloads. Styling uses Tailwind CSS and follows the supplied dark dashboard reference. GitHub publication and Azure deployment are intentionally deferred until the local implementation is reviewed; infrastructure files are not evidence of a completed deployment.
+The application includes login/logout, revocable JWT sessions, repeatable sample-data seeding, financial charts and metrics, server-side filtering/search/sorting/pagination, and configurable CSV downloads. A responsive Tailwind CSS application shell follows the supplied dark dashboard reference and provides separate Dashboard, Transactions, Wallet, Analytics, Personal, Messages, and Settings routes. The project is published on GitHub; Azure infrastructure files are preparation for deployment and are not evidence of a completed cloud release.
 
 ## Run locally
 
@@ -48,7 +48,7 @@ infra             Azure Bicep template
 docs              Decisions, API, delivery plan, deployment guide
 ```
 
-See [decisions](docs/decisions.md), [API usage](docs/api.md), [delivery plan](docs/plan.md), and [deployment](docs/deployment.md).
+See [architecture](docs/architecture.md), [decisions](docs/decisions.md), and [API usage](docs/api.md).
 
 ## Data and design assumptions
 

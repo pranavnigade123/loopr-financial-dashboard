@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { ArrowDown, ArrowUp, Download, X } from 'lucide-react';
 import { exportColumns, type ExportColumn, type Transaction } from '@loopr/contracts';
 import { money, displayDate } from './format';
+import { ui } from '../../components/ui';
 
 const labels: Record<ExportColumn, string> = {
   id: 'Transaction ID',
@@ -82,20 +83,22 @@ export function ExportDialog({
   return (
     <dialog
       ref={dialog}
-      className="export-dialog"
+      className="fixed m-auto max-h-[90dvh] w-[min(780px,94vw)] overflow-y-auto rounded-2xl border border-white/15 bg-panel p-7 text-[#f3f4f6] shadow-2xl backdrop:bg-[#080a10bb] backdrop:backdrop-blur-[5px]"
       aria-labelledby="export-title"
       onCancel={onClose}
       onClose={onClose}
     >
       <div className="flex items-start justify-between gap-4">
         <div>
-          <p className="eyebrow">BUILD YOUR REPORT</p>
+          <p className={ui.eyebrow}>BUILD YOUR REPORT</p>
           <h2 id="export-title" className="mt-2 text-2xl font-semibold">
             Export transactions
           </h2>
-          <p className="muted mt-2">All {total} matching transactions, across every page.</p>
+          <p className={`${ui.muted} mt-2`}>
+            All {total} matching transactions, across every page.
+          </p>
         </div>
-        <button className="secondary" aria-label="Close export" onClick={onClose}>
+        <button className={ui.secondary} aria-label="Close export" onClick={onClose}>
           <X size={18} />
         </button>
       </div>
@@ -139,7 +142,7 @@ export function ExportDialog({
                 </span>
                 <span className="flex gap-1">
                   <button
-                    className="secondary !p-1.5"
+                    className={`${ui.secondary} p-1.5`}
                     disabled={!index || busy}
                     aria-label={`Move ${labels[column]} up`}
                     onClick={() => move(index, -1)}
@@ -147,7 +150,7 @@ export function ExportDialog({
                     <ArrowUp size={14} />
                   </button>
                   <button
-                    className="secondary !p-1.5"
+                    className={`${ui.secondary} p-1.5`}
                     disabled={index === columns.length - 1 || busy}
                     aria-label={`Move ${labels[column]} down`}
                     onClick={() => move(index, 1)}
@@ -158,7 +161,7 @@ export function ExportDialog({
               </li>
             ))}
           </ol>
-          {!columns.length && <p className="muted">Select at least one column.</p>}
+          {!columns.length && <p className={ui.muted}>Select at least one column.</p>}
         </div>
       </div>
       <div className="mt-7">
@@ -166,12 +169,14 @@ export function ExportDialog({
           Preview{' '}
           <span className="font-normal text-muted">· up to 3 rows from the current page</span>
         </h3>
-        <div className="table-scroll rounded-lg border border-white/10">
-          <table>
-            <thead>
+        <div className="w-full overflow-x-auto rounded-lg border border-white/10">
+          <table className="w-full border-collapse whitespace-nowrap text-[13px]">
+            <thead className="bg-[#282c35] text-left text-[#aaa6c3]">
               <tr>
                 {columns.map((column) => (
-                  <th key={column}>{labels[column]}</th>
+                  <th className="px-[17px] py-[15px] font-medium" key={column}>
+                    {labels[column]}
+                  </th>
                 ))}
               </tr>
             </thead>
@@ -179,7 +184,10 @@ export function ExportDialog({
               {preview.slice(0, 3).map((row) => (
                 <tr key={row.id}>
                   {columns.map((column) => (
-                    <td key={column}>
+                    <td
+                      className="border-b border-[#2c2f36] px-[17px] py-[17px] text-[#d9dce1]"
+                      key={column}
+                    >
                       {column === 'amount'
                         ? money(row.amountMinor)
                         : column === 'date'
@@ -198,14 +206,17 @@ export function ExportDialog({
         </p>
       </div>
       {error && (
-        <p role="alert" className="alert mt-4">
+        <p
+          role="alert"
+          className="mt-4 rounded-lg border border-[#79414c] bg-[#42292e] px-4 py-3 text-[13px] text-[#ffccd3]"
+        >
           {error}
         </p>
       )}
       <div className="mt-7 flex items-center justify-between gap-4 border-t border-white/10 pt-5">
         <span className="text-xs text-muted">UTF-8 CSV · Headers included</span>
         <button
-          className="primary gap-3"
+          className={ui.primary}
           disabled={!columns.length || busy || !total}
           onClick={() => {
             void download();

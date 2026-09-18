@@ -2,13 +2,15 @@ import { useEffect, useState } from 'react';
 import type { Analytics, TransactionMetadata, TransactionPage } from '@loopr/contracts';
 import { api, RequestError } from '../../api';
 
+export interface DashboardData {
+  transactions: TransactionPage;
+  analytics: Analytics;
+  recent: TransactionPage;
+  metadata: TransactionMetadata;
+}
+
 export function useDashboard(query: string, onUnauthorized: () => void) {
-  const [data, setData] = useState<{
-    transactions: TransactionPage;
-    analytics: Analytics;
-    recent: TransactionPage;
-    metadata: TransactionMetadata;
-  } | null>(null);
+  const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [revision, setRevision] = useState(0);

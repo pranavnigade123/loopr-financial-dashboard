@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
+import { ui } from '../../components/ui';
 
 export function Filters({
   params,
@@ -40,7 +41,7 @@ export function Filters({
           <span className="sr-only">Search transactions</span>
           <Search size={17} className="absolute left-3.5 top-3.5 text-muted" />
           <input
-            className="filter-input w-full !pl-11"
+            className={`${ui.input} pl-11`}
             placeholder="Search user, category, status, ID, date or amount…"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
@@ -48,7 +49,7 @@ export function Filters({
           />
         </label>
         <button
-          className="secondary !py-3"
+          className={`${ui.secondary} py-3`}
           aria-expanded={expanded}
           aria-controls="advanced-filters"
           onClick={() => setExpanded((value) => !value)}
@@ -60,7 +61,7 @@ export function Filters({
           )}
         </button>
         {active.length > 0 && (
-          <button className="secondary" onClick={clear}>
+          <button className={ui.secondary} onClick={clear}>
             <X size={14} />
             Clear
           </button>
@@ -74,10 +75,10 @@ export function Filters({
           <legend className="px-2 text-xs text-muted">
             Combine filters to refine all dashboard results
           </legend>
-          <label className="filter-label">
+          <label className="flex flex-col gap-2 text-xs text-muted">
             Category
             <select
-              className="filter-input"
+              className={ui.input}
               value={params.get('category') ?? ''}
               onChange={(event) => update('category', event.target.value)}
             >
@@ -86,10 +87,10 @@ export function Filters({
               <option>Expense</option>
             </select>
           </label>
-          <label className="filter-label">
+          <label className="flex flex-col gap-2 text-xs text-muted">
             Status
             <select
-              className="filter-input"
+              className={ui.input}
               value={params.get('status') ?? ''}
               onChange={(event) => update('status', event.target.value)}
             >
@@ -98,10 +99,10 @@ export function Filters({
               <option>Pending</option>
             </select>
           </label>
-          <label className="filter-label">
+          <label className="flex flex-col gap-2 text-xs text-muted">
             User
             <select
-              className="filter-input"
+              className={ui.input}
               value={params.get('userId') ?? ''}
               onChange={(event) => update('userId', event.target.value)}
             >
@@ -113,30 +114,30 @@ export function Filters({
               ))}
             </select>
           </label>
-          <label className="filter-label">
+          <label className="flex flex-col gap-2 text-xs text-muted">
             From date (UTC)
             <input
-              className="filter-input"
+              className={ui.input}
               type="date"
               value={params.get('dateFrom') ?? ''}
               max={params.get('dateTo') ?? undefined}
               onChange={(event) => update('dateFrom', event.target.value)}
             />
           </label>
-          <label className="filter-label">
+          <label className="flex flex-col gap-2 text-xs text-muted">
             Through date (UTC)
             <input
-              className="filter-input"
+              className={ui.input}
               type="date"
               value={params.get('dateTo') ?? ''}
               min={params.get('dateFrom') ?? undefined}
               onChange={(event) => update('dateTo', event.target.value)}
             />
           </label>
-          <label className="filter-label">
+          <label className="flex flex-col gap-2 text-xs text-muted">
             Minimum amount (USD)
             <input
-              className="filter-input"
+              className={ui.input}
               type="number"
               min="0"
               step="0.01"
@@ -145,10 +146,10 @@ export function Filters({
               onChange={(event) => update('amountMin', event.target.value)}
             />
           </label>
-          <label className="filter-label">
+          <label className="flex flex-col gap-2 text-xs text-muted">
             Maximum amount (USD)
             <input
-              className="filter-input"
+              className={ui.input}
               type="number"
               min="0"
               step="0.01"
