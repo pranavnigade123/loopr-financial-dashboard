@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useRef, useState, type FormEvent } from 'react';
 import { ArrowUpRight, ShieldCheck, Wallet } from 'lucide-react';
 import type { SessionResponse, SessionUser } from '@loopr/contracts';
 import { registerSchema } from '@loopr/contracts';
@@ -7,6 +7,7 @@ import { Brand } from '../../components/Brand';
 import { ui } from '../../components/ui';
 
 export function Login({ onLogin }: { onLogin: (user: SessionUser) => void }) {
+  const formRef = useRef<HTMLFormElement>(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [registering, setRegistering] = useState(false);
@@ -117,11 +118,41 @@ export function Login({ onLogin }: { onLogin: (user: SessionUser) => void }) {
             </p>
           )}
           <form
+            ref={formRef}
             className="mt-9 flex flex-col"
             onSubmit={(event) => {
               void submit(event);
             }}
           >
+            {!registering && (
+              <div className="mb-6 rounded-xl border border-accent/25 bg-accent/[0.07] p-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-white">Exploring the demo?</p>
+                    <p className="mt-1 text-xs leading-5 text-muted">
+                      Fill the reviewer account with one click.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    className="shrink-0 rounded-lg border border-accent/40 px-3 py-2 text-xs font-semibold text-accent transition hover:bg-accent/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+                    onClick={() => {
+                      const form = formRef.current;
+                      if (!form) return;
+                      const email = form.elements.namedItem('email');
+                      const password = form.elements.namedItem('password');
+                      if (email instanceof HTMLInputElement) email.value = 'analyst@loopr.local';
+                      if (password instanceof HTMLInputElement) password.value = 'TestPassword123!';
+                      setError('');
+                      setFields({});
+                      if (password instanceof HTMLInputElement) password.focus();
+                    }}
+                  >
+                    Use demo account
+                  </button>
+                </div>
+              </div>
+            )}
             {registering && (
               <>
                 <label className="mb-2 text-[13px] font-medium" htmlFor="name">

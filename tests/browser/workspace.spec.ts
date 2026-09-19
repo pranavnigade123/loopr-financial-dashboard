@@ -198,4 +198,7 @@ test('registration confirmation, successful signup, login and logout', async ({
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('Dashboard');
   await page.getByRole('button', { name: 'Sign out' }).click();
   await expect(page.getByRole('heading', { name: 'Sign in to your workspace' })).toBeVisible();
+  await page.getByRole('button', { name: 'Use demo account' }).click();
+  await expect(page.getByLabel('Email address')).toHaveValue('analyst@loopr.local');
+  await expect(page.getByLabel('Password', { exact: true })).toHaveValue('TestPassword123!');
 });
