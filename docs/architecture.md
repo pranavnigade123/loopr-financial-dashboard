@@ -41,9 +41,9 @@ With 300 records, a modest scan for text search or an uncommon sort is appropria
 
 ## Release model
 
-The planned deployment uses one Azure App Service for the built frontend and API, with Atlas hosted separately. The release allowlist includes compiled artifacts, manifests, and the lockfile, excluding environment files, sample data, and tests. The manual deployment workflow runs checks before release and uses OIDC authentication. Cloud deployment and production smoke tests are pending.
+Production uses one Linux Azure App Service for the built frontend and API, with MongoDB Atlas hosted separately. The release allowlist includes compiled artifacts, manifests, and the lockfile while excluding environment files, source data, and tests. GitHub Actions runs the full verification suite, builds a minimal artifact, authenticates to Azure through OIDC, deploys it, and probes database readiness. App Service injects production configuration at runtime.
 
-Serving the frontend and API from one origin simplifies cookie authentication and keeps releases synchronized. Rate limiting is process-local; multiple application instances would need shared state. Azure proxy behavior and client IP attribution still need deployment verification.
+Serving the frontend and API from one origin simplifies cookie authentication and keeps releases synchronized. The deployed service binds to Azure's runtime-provided port and exposes separate liveness and database-readiness endpoints. Rate limiting is process-local; multiple application instances would need shared state.
 
 ## Financial rules
 

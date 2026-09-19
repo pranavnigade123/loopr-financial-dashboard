@@ -10,7 +10,9 @@ A financial dashboard for exploring company transactions, comparing revenue and 
 - Server-generated CSV downloads with selectable columns and a preview. Exports include all matching records.
 - Responsive pages, keyboard-accessible dialogs, and loading, empty, and recoverable error states.
 
-Azure deployment is pending. The application can be evaluated locally using the instructions below.
+## Live demo
+
+The application is deployed to Azure App Service at [loopr-pranav-dashboard](https://loopr-pranav-dashboard-h6gaexeve8e4bqhb.southindia-01.azurewebsites.net). The deployment uses an Azure for Students subscription and is intended for assignment review, so it will remain online for a limited evaluation period. The local setup below remains available after the hosted demo is decommissioned.
 
 ## Run locally
 
@@ -21,7 +23,7 @@ Azure deployment is pending. The application can be evaluated locally using the 
 | Email    | `analyst@loopr.local` |
 | Password | `TestPassword123!`    |
 
-This intentionally public demo account has access to the shared sample transactions. For a fresh local database, set `DEMO_EMAIL` and `DEMO_PASSWORD` to these values before seeding, or choose your own credentials. The deployed application URL is pending.
+This intentionally public demo account has access to the shared sample transactions. For a fresh local database, set `DEMO_EMAIL` and `DEMO_PASSWORD` to these values before seeding, or choose your own credentials.
 
 ### Setup
 
@@ -59,11 +61,23 @@ If the demo account already exists, changing `.env` alone does not change its pa
 
 Production and test processes do not load the local `.env`. The browser uses relative `/api` URLs in both environments; production serves the compiled frontend and API together. Production requires HTTPS and enables Secure session cookies. Demo account settings are used only by seeding/password-reset commands and are not needed to start the deployed server.
 
-Production startup command: `node apps/api/dist/server.js`, after building the workspaces and installing runtime dependencies. Azure setup and live verification remain pending.
+Production starts with `node apps/api/dist/server.js` after the workflow builds the workspaces, creates a minimal release artifact, and installs production dependencies.
+
+## Deployment and CI/CD
+
+The frontend and API are deployed together to one Linux Azure App Service. Fastify serves the compiled React application and exposes the REST API under `/api`; MongoDB Atlas provides persistence. Keeping both layers on one origin simplifies secure cookie authentication and gives each commit one synchronized release.
+
+The [GitHub Actions workflow](.github/workflows/main_loopr-pranav-dashboard.yml) runs on pull requests and pushes to `main`:
+
+1. Install dependencies and run formatting, linting, type checks, unit tests, MongoDB integration tests, and Chromium browser tests.
+2. Build all npm workspaces and assemble a minimal production artifact.
+3. Authenticate to Azure through OpenID Connect, deploy to App Service, and verify the database-readiness endpoint.
+
+Production secrets stay in Azure App Service settings and are never included in the repository or deployment artifact. Azure supplies `PORT`; the application binds to `0.0.0.0`. Atlas network access is configured separately. The deployed health endpoints are `/api/health/live` for process health and `/api/health/ready` for database readiness.
 
 ## Verification and commands
 
-Verification includes 15 unit tests, 13 MongoDB integration tests, and 9 Chromium browser tests. The [quality workflow](.github/workflows/ci.yml) runs these alongside formatting, lint, type-checking, and the production build on pushes and pull requests.
+Verification includes 15 unit tests, 13 MongoDB integration tests, and 9 Chromium browser tests. The [quality and deployment workflow](.github/workflows/main_loopr-pranav-dashboard.yml) runs these alongside formatting, linting, type-checking, and the production build.
 
 | Command                       | Purpose                                                        |
 | ----------------------------- | -------------------------------------------------------------- |
@@ -92,7 +106,6 @@ packages/contracts Shared Zod validation and API types
 data              Original assignment dataset
 postman           Collection and environment template
 tests             Unit, real-database integration, and browser checks
-infra             Azure Bicep template
 docs              Architecture and engineering decisions, API reference
 ```
 
@@ -126,4 +139,4 @@ The supplied Penta dashboard is the visual reference. Login and missing interact
 
 Realized revenue and expenses include Paid transactions; pending incoming and outgoing amounts are reported separately. Transactions are seeded into MongoDB; file uploads and transaction editing are not implemented. Registration gives access to the shared sample workspace, without email verification or password recovery.
 
-Wallet summarizes cash flow. Personal and Settings display account information and reporting defaults. Messages contains system notices. These pages do not implement bank connections, account editing, or person-to-person messaging. Production deployment and smoke tests remain pending.
+Wallet summarizes cash flow. Personal and Settings display account information and reporting defaults. Messages contains system notices. These pages do not implement bank connections, account editing, or person-to-person messaging.
