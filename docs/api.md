@@ -1,6 +1,6 @@
 # REST API
 
-Local API base URL: `http://localhost:3000/api`. Development frontend proxies `/api` to this server. All JSON responses are non-cacheable. Amounts use integer minor units. Production uses HTTPS.
+Local API base URL: `http://localhost:3000/api`. Hosted reviewer API: `https://loopr-pranav-dashboard-h6gaexeve8e4bqhb.southindia-01.azurewebsites.net/api` (available for a limited review period). Development frontend proxies `/api` to the local server. All JSON responses are non-cacheable. Amounts use integer minor units. Production uses HTTPS.
 
 | Method | Path             | Authentication | Purpose                                                   |
 | ------ | ---------------- | -------------- | --------------------------------------------------------- |
@@ -82,4 +82,6 @@ Errors use `{ "error": { "code": "INVALID_REQUEST", "message": "...", "requestId
 
 For registration, import `postman/registration.json` and use the same environment. Run its four requests together to create a generated analyst, reject a duplicate, log in, and log out. Each run adds one persistent test account to the selected database; use a development database. The main collection remains usable with the seeded demo account.
 
-Import `postman/collection.json` and `postman/environment.json`, select the local environment, and enter the demo password from the [README](../README.md#demo-login), or your own locally configured password. Run the collection in order. It checks login, identity, paging, combined filters, analytics, search, configurable CSV, invalid requests, logout, and rejection after logout. Cookie persistence must be enabled. Keep private credentials out of shared environment exports. The collection was executed against an isolated local instance: 14 requests and 23 assertions passed. The runner is not a required application dependency; Postman's Collection Runner can execute the supplied files.
+Import `postman/collection.json` with `postman/environment.json`. The environment targets localhost; enter the password configured in your own `.env`. Do not export or commit an environment containing credentials or session data.
+
+Run the collection in order. It checks liveness, readiness, login, identity, paging, combined filters, analytics, search, configurable CSV, invalid requests, logout, and rejection after logout. Cookie persistence must be enabled. Keep private credentials out of shared environment exports. The same behavior is covered by automated tests against an isolated MongoDB instance. The runner is not a required application dependency; Postman's Collection Runner can execute the supplied files.

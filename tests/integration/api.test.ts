@@ -70,7 +70,12 @@ describe('authenticated API against real MongoDB', () => {
     expect((await app.inject('/api/health/ready')).statusCode).toBe(200);
   });
   it('checks readiness and protects transaction data', async () => {
-    expect((await app.inject('/api/health/ready')).statusCode).toBe(200);
+    const live = await app.inject('/api/health/live');
+    const ready = await app.inject('/api/health/ready');
+    expect(live.statusCode).toBe(200);
+    expect(live.json()).toEqual({ status: 'ok' });
+    expect(ready.statusCode).toBe(200);
+    expect(ready.json()).toEqual({ status: 'ok' });
     expect((await app.inject('/api/transactions')).statusCode).toBe(401);
   });
   it('rejects cross-origin and missing-header login attempts', async () => {
@@ -131,6 +136,17 @@ describe('authenticated API against real MongoDB', () => {
       (await app.inject({ url: '/api/transactions?pageSize=1000', headers: { cookie } }))
         .statusCode,
     ).toBe(400);
+    expect(
+      (await app.inject({ url: '/api/transactions?unsupported=true', headers: { cookie } }))
+        .statusCode,
+    ).toBe(400);
+    const metadata = await app.inject({ url: '/api/transactions/metadata', headers: { cookie } });
+    expect(metadata.statusCode).toBe(200);
+    expect(metadata.json()).toEqual({
+      users: ['user_001', 'user_002', 'user_003', 'user_004'],
+      dateFrom: expect.stringMatching(/^2024-/),
+      dateTo: expect.stringMatching(/^2024-/),
+    });
   });
   it('rejects expired database sessions even before TTL cleanup', async () => {
     const token = app.jwt.sign({ sub: 'test-user', jti: 'expired-session' });
@@ -208,6 +224,13 @@ describe('authenticated API against real MongoDB', () => {
     expect(lines.slice(1).map((line) => Number(line.split(',')[2]))).toEqual(
       expected.map((row) => row.amount).sort((a, b) => a - b),
     );
+    const invalidExport = await app.inject({
+      method: 'POST',
+      url: '/api/exports',
+      headers: { ...headers, cookie },
+      payload: { query: {}, columns: ['passwordHash'] },
+    });
+    expect(invalidExport.statusCode).toBe(400);
   });
   it('handles literal search, empty results and invalid filter ranges', async () => {
     const none = await app.inject({

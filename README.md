@@ -127,9 +127,9 @@ TypeScript checks module boundaries; linting and formatting keep conventions con
 
 ## API collection
 
-Import [the Postman collection](postman/collection.json) and [environment template](postman/environment.json). Set the environment's `demoPassword` locally, select it, and run the collection in order. The 14 requests cover authentication, filters, analytics, exports, validation errors, and logout. See [API usage](docs/api.md#postman) for setup details.
+Import [the Postman collection](postman/collection.json) and [environment template](postman/environment.json). Enter the demo password locally, select the environment, and run the collection in order. The 15 requests cover health, authentication, filters, analytics, exports, validation errors, and logout. See [API usage](docs/api.md#postman) for setup details.
 
-The API base URL is `http://localhost:3000/api`; port 5173 serves the development frontend. The separate [registration collection](postman/registration.json) covers account creation, duplicate rejection, login, and logout. It creates a test account on each run; use a development database.
+The environment template targets the local API at `http://localhost:3000/api`; port 5173 serves the development frontend. The separate [registration collection](postman/registration.json) covers account creation, duplicate rejection, login, and logout. It creates a persistent test account on each run, so use a development database for registration runs.
 
 ## Assumptions and limitations
 

@@ -1,10 +1,30 @@
 {
   "info": {
-    "name": "Penta — Loopr API",
-    "description": "Financial transaction analytics API. Import environment.json and select it before running. Set baseUrl to http://localhost:3000/api for local development, demoEmail to your seeded analyst email, and demoPassword to the locally configured password. Run all 14 requests in order with Postman's cookie jar enabled: Login sets an HttpOnly session cookie; Logout clears and revokes it. No bearer-token variable is needed. Amounts in JSON are integer USD cents; CSV amounts are decimal USD. Dates use UTC. Validation requests intentionally expect HTTP 400; the final request expects HTTP 401. This collection was previously verified locally with 23 passing assertions. A hosted API URL will be provided after deployment. Keep passwords and session cookies out of shared environments and examples.",
+    "name": "Penta \u00e2\u20ac\u201d Loopr API",
+    "description": "Financial transaction analytics API for the Penta dashboard. Import environment.json, enter credentials locally, and select it before running. Run all 15 requests in order with Postman's cookie jar enabled: Login sets an HttpOnly session cookie; Logout clears and revokes it. No bearer-token variable is needed. Amounts in JSON are integer USD cents; CSV amounts are decimal USD. Dates use UTC. Validation requests intentionally expect HTTP 400; the final request expects HTTP 401. Keep credentials and session cookies out of shared environment exports.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
+    {
+      "name": "Liveness",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/health/live"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Process is healthy', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+            ]
+          }
+        }
+      ]
+    },
     {
       "name": "Readiness",
       "request": {
@@ -17,7 +37,10 @@
           "listen": "test",
           "script": {
             "type": "text/javascript",
-            "exec": ["pm.test('HTTP 200', () => pm.response.to.have.status(200));"]
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Database is ready', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+            ]
           }
         }
       ]
@@ -73,13 +96,16 @@
           "listen": "test",
           "script": {
             "type": "text/javascript",
-            "exec": ["pm.test('HTTP 200', () => pm.response.to.have.status(200));"]
+            "exec": [
+              "pm.test('HTTP 200', () => pm.response.to.have.status(200));",
+              "pm.test('Current analyst shape', () => { const user = pm.response.json().user; pm.expect(user).to.include.keys('id', 'email', 'name'); pm.expect(user).not.to.have.property('passwordHash'); });"
+            ]
           }
         }
       ]
     },
     {
-      "name": "Transactions — page 1",
+      "name": "Transactions \u00e2\u20ac\u201d page 1",
       "request": {
         "method": "GET",
         "header": [],
