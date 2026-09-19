@@ -1,4 +1,4 @@
-# Architecture
+# Architecture and engineering decisions
 
 ```mermaid
 flowchart LR
@@ -17,6 +17,8 @@ flowchart LR
 ```
 
 ## Boundaries
+
+One npm-workspaces repository contains the frontend, API, and shared contracts. Fastify supplies routing, structured logging, and request injection for tests. The native MongoDB driver handles persistence; Zod validates inputs without maintaining a second set of ORM schemas.
 
 - `apps/web`: presentation, URL view state, abortable requests, charts, export configuration. No database secrets or database driver.
 - `apps/api`: HTTP/security configuration, authentication, query construction, aggregations, CSV generation, database access. Never trusts client totals or an unrestricted MongoDB query object.
@@ -40,3 +42,25 @@ With 300 records, a modest scan for text search or an uncommon sort is appropria
 ## Release model
 
 The planned deployment uses one Azure App Service for the built frontend and API, with Atlas hosted separately. The release allowlist includes compiled artifacts, manifests, and the lockfile, excluding environment files, sample data, and tests. The manual deployment workflow runs checks before release and uses OIDC authentication. Cloud deployment and production smoke tests are pending.
+
+Serving the frontend and API from one origin simplifies cookie authentication and keeps releases synchronized. Rate limiting is process-local; multiple application instances would need shared state. Azure proxy behavior and client IP attribution still need deployment verification.
+
+## Financial rules
+
+- Store nonnegative integer cents (`amountMinor`) and derive direction from Revenue/Expense.
+- Use USD as a display assumption and UTC for dates. Date filters include the entire selected end day.
+- Paid revenue minus paid expenses gives realized net cash flow. Pending incoming and outgoing amounts are reported separately.
+- No opening balance or savings data is supplied, so net cash flow is not labeled as an account balance.
+- The default view includes the supplied 2024 records rather than filtering to the current year.
+
+## Identity and sessions
+
+Registered analysts share the sample company dataset; accounts are not separate tenants. Source transaction user IDs are distinct from login accounts. Normalized emails have a unique index, and registration requires a separate login. Email verification and password recovery are outside the current scope.
+
+Passwords use salted scrypt hashes. One-hour JWTs have a fixed algorithm, issuer, and audience, and are stored in an HttpOnly, SameSite=Strict cookie scoped to `/api` (Secure in production). MongoDB session records allow immediate logout revocation. Browser writes validate Origin and require a custom header; non-browser clients must also send the header.
+
+## Practical limits
+
+Offset pagination suits the 300-record dataset. CSV exports include all matching records, respect selected column order, and are bounded to 10,000 rows. Seed validates the full source before upserting; it is repeatable but not a multi-document transaction. Seeding never runs automatically at server startup.
+
+The UI uses Tailwind utilities and self-hosted fonts. Sidebar pages extend the supplied dashboard: Wallet summarizes cash flow, Messages shows system notices, and Personal/Settings display account information and reporting defaults. Bank connections, transfers, chat, and account editing are outside scope.

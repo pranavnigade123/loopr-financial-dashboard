@@ -2,19 +2,34 @@
 
 A financial dashboard for exploring company transactions, comparing revenue and expenses, and exporting reports. Built with React, Tailwind CSS, Fastify, TypeScript, and MongoDB Atlas in one npm-workspaces repository.
 
-## Current status
+## Features
 
-Implemented: account registration, cookie-based authentication, transaction search and combined filters, stable sorting and pagination, financial charts, and CSV exports with selectable columns. New accounts access the shared sample workspace. Email verification and password recovery are not yet available. The responsive UI has separate Dashboard, Transactions, Wallet, Analytics, Personal, Messages, and Settings routes.
+- JWT login/logout and account registration, with HttpOnly cookies and revocable sessions.
+- Financial summaries and interactive revenue, expense, cash-flow, and settlement charts.
+- Transaction search, combined filters, stable sorting, and pagination with URL-based state.
+- Server-generated CSV downloads with selectable columns and a preview. Exports include all matching records.
+- Responsive pages, keyboard-accessible dialogs, and loading, empty, and recoverable error states.
 
-Wallet summarizes cash flow; it does not connect to a bank. Personal and Settings display account information and fixed reporting defaults. Messages contains system notices rather than person-to-person messaging. Azure deployment is pending; infrastructure and a manual release workflow are included.
+Azure deployment is pending. The application can be evaluated locally using the instructions below.
 
 ## Run locally
+
+### Demo login
+
+| Field    | Value                 |
+| -------- | --------------------- |
+| Email    | `analyst@loopr.local` |
+| Password | `TestPassword123!`    |
+
+This intentionally public demo account has access to the shared sample transactions. For a fresh local database, set `DEMO_EMAIL` and `DEMO_PASSWORD` to these values before seeding, or choose your own credentials. The deployed application URL is pending.
+
+### Setup
 
 Requirements: Node.js 22.13+ and MongoDB (local or Atlas). Use a dedicated `loopr` database and a database user restricted to it.
 
 1. Run `npm ci`.
 2. Copy `.env.example` to `.env` at the repository root.
-3. Set `MONGODB_URI` with an explicit `/loopr` database name, a random `JWT_SECRET` of at least 32 characters, and `DEMO_PASSWORD` of at least 12 characters. Never commit this file.
+3. Set `MONGODB_URI` with an explicit database name such as `/loopr`, a random `JWT_SECRET` of at least 32 characters, and `DEMO_EMAIL` / `DEMO_PASSWORD` using the demo details above or your own values. Keep `PORT=3000` and `APP_ORIGIN=http://localhost:5173` for local development. Never commit `.env`.
 4. Run `npm run seed`. The command validates the entire source file, upserts records by source ID, creates indexes, and creates the demo analyst if absent. It does not delete unrelated records or reset an existing password.
 5. Run `npm run dev`, then open `http://localhost:5173`.
 6. Sign in using `DEMO_EMAIL` and the password configured in step 3.
@@ -23,7 +38,32 @@ For Atlas, allow your current IP in Network Access and use the database user's c
 
 If the demo account already exists, changing `.env` alone does not change its password. Run `npm run reset:demo-password` explicitly to apply `DEMO_PASSWORD` to that account and revoke its existing sessions.
 
-## Commands
+## Suggested review flow
+
+1. Sign in and inspect the dashboard summaries, trend chart, and recent transactions.
+2. Open Transactions, combine Revenue and Paid filters, then search, sort, and change pages. Refresh or use Back to check that the URL preserves the selected view.
+3. Export selected columns to CSV. The download includes all matching records, including those outside the current page.
+4. Open Analytics for additional charts, then check navigation at mobile width.
+5. Sign out, or create an account to try registration.
+
+## Environment configuration
+
+| Setting              | Local development                             | Azure production                                          |
+| -------------------- | --------------------------------------------- | --------------------------------------------------------- |
+| Configuration source | Root `.env`                                   | App Service environment variables                         |
+| `NODE_ENV`           | `development`                                 | `production`                                              |
+| `APP_ORIGIN`         | `http://localhost:5173`                       | Exact HTTPS origin shown in the App Service overview      |
+| `PORT`               | `3000` (Vite proxy follows this value)        | Provided by the hosting runtime                           |
+| `MONGODB_URI`        | Local MongoDB or a development Atlas database | Atlas connection string for the deployed sample workspace |
+| `JWT_SECRET`         | Local random secret                           | Separate production secret of at least 32 characters      |
+
+Production and test processes do not load the local `.env`. The browser uses relative `/api` URLs in both environments; production serves the compiled frontend and API together. Production requires HTTPS and enables Secure session cookies. Demo account settings are used only by seeding/password-reset commands and are not needed to start the deployed server.
+
+Production startup command: `node apps/api/dist/server.js`, after building the workspaces and installing runtime dependencies. Azure setup and live verification remain pending.
+
+## Verification and commands
+
+Verification includes 15 unit tests, 13 MongoDB integration tests, and 9 Chromium browser tests. The [quality workflow](.github/workflows/ci.yml) runs these alongside formatting, lint, type-checking, and the production build on pushes and pull requests.
 
 | Command                       | Purpose                                                        |
 | ----------------------------- | -------------------------------------------------------------- |
@@ -51,19 +91,39 @@ apps/api          Fastify, MongoDB driver, authentication and REST endpoints
 packages/contracts Shared Zod validation and API types
 data              Original assignment dataset
 postman           Collection and environment template
-tests             Unit and real-database integration checks
+tests             Unit, real-database integration, and browser checks
 infra             Azure Bicep template
-docs              Architecture, engineering decisions, API reference
+docs              Architecture and engineering decisions, API reference
 ```
 
-See [architecture](docs/architecture.md), [decisions](docs/decisions.md), and [API usage](docs/api.md).
+See [architecture and engineering decisions](docs/architecture.md) and [API usage](docs/api.md).
+
+## Design decisions and maintainability
+
+| Decision                                                       | Reason                                                                                        |
+| -------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| One repository with separate web, API, and contracts packages  | Keeps frontend and backend changes together while making responsibilities clear.              |
+| Shared Zod schemas and one server filter builder               | Avoids duplicated validation rules and keeps table, chart, and CSV filters consistent.        |
+| Feature folders and separate page components                   | Keeps each screen understandable without putting the entire dashboard in one component.       |
+| Reusable controls, table components, and Tailwind style tokens | Keeps common interactions and visual styles consistent across pages.                          |
+| Integer cents and explicit Paid/Pending calculations           | Avoids floating-point arithmetic for monetary totals and makes financial assumptions visible. |
+| URL-based filters and a centralized request helper             | Supports refresh and browser history while keeping timeout and error handling consistent.     |
+| Tests for calculations, API behavior, and browser flows        | Provides regression coverage for exports, authentication, filters, and failure recovery.      |
+
+TypeScript checks module boundaries; linting and formatting keep conventions consistent. The backend uses the native MongoDB driver and direct query functions, with offset pagination suited to the 300-record dataset. More complex infrastructure is deferred until the application's needs justify it.
 
 ## API collection
 
 Import [the Postman collection](postman/collection.json) and [environment template](postman/environment.json). Set the environment's `demoPassword` locally, select it, and run the collection in order. The 14 requests cover authentication, filters, analytics, exports, validation errors, and logout. See [API usage](docs/api.md#postman) for setup details.
 
-## Data and design assumptions
+The API base URL is `http://localhost:3000/api`; port 5173 serves the development frontend. The separate [registration collection](postman/registration.json) covers account creation, duplicate rejection, login, and logout. It creates a test account on each run; use a development database.
+
+## Assumptions and limitations
 
 The sample contains 300 transactions from 2024, four user IDs, Revenue/Expense categories, and Paid/Pending statuses. Monetary amounts are stored as integer minor units. USD is a display assumption based on the supplied Figma; the source has no currency field. Dates use UTC consistently. All demo analysts can read the supplied company dataset. Transaction user IDs are not authentication accounts.
 
 The supplied Penta dashboard is the visual reference. Login and missing interaction states are designed as extensions. No actual balance, savings, person names, or spending subcategories are inferred from data that does not contain them.
+
+Realized revenue and expenses include Paid transactions; pending incoming and outgoing amounts are reported separately. Transactions are seeded into MongoDB; file uploads and transaction editing are not implemented. Registration gives access to the shared sample workspace, without email verification or password recovery.
+
+Wallet summarizes cash flow. Personal and Settings display account information and reporting defaults. Messages contains system notices. These pages do not implement bank connections, account editing, or person-to-person messaging. Production deployment and smoke tests remain pending.
