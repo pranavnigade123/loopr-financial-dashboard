@@ -1,8 +1,10 @@
+import { Link } from 'react-router-dom';
+
 export function Brand() {
   return (
-    <a
+    <Link
       className="inline-flex items-center gap-2 text-[31px] font-bold tracking-[-1.8px] text-[#f7f7f8] no-underline"
-      href="/dashboard"
+      to="/dashboard"
       aria-label="Penta home"
     >
       <span
@@ -12,6 +14,6 @@ export function Brand() {
         P
       </span>
       Penta<span className="-ml-2 text-accent">.</span>
-    </a>
+    </Link>
   );
 }

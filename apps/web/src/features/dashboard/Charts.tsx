@@ -13,6 +13,7 @@ import {
 } from 'recharts';
 import type { Analytics } from '@loopr/contracts';
 import { money, shortMoney } from './format';
+import { monthlySeries } from './monthlySeries';
 
 const green = '#1dce57';
 const yellow = '#ffc21a';
@@ -30,18 +31,7 @@ export function TrendChart({
   analytics: Analytics;
   hideLegend?: boolean;
 }) {
-  const byMonth = new Map(analytics.monthly.map((point) => [point.month, point]));
-  const points: Analytics['monthly'] = [];
-  const first = analytics.monthly[0]?.month;
-  const last = analytics.monthly.at(-1)?.month;
-  if (first && last) {
-    const cursor = new Date(`${first}-01T00:00:00Z`);
-    for (let count = 0; cursor.toISOString().slice(0, 7) <= last && count < 1200; count++) {
-      const month = cursor.toISOString().slice(0, 7);
-      points.push(byMonth.get(month) ?? { month, revenueMinor: 0, expenseMinor: 0 });
-      cursor.setUTCMonth(cursor.getUTCMonth() + 1);
-    }
-  }
+  const points = monthlySeries(analytics.monthly);
   if (!analytics.paidRevenueMinor && !analytics.paidExpenseMinor)
     return (
       <div className="flex h-72 items-center justify-center px-6 text-center text-sm text-muted">

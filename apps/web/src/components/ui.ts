@@ -1,5 +1,6 @@
 export const ui = {
-  panel: 'rounded-[14px] bg-panel p-5 md:p-7',
+  panel:
+    'rounded-[14px] bg-panel p-5 md:p-7 motion-safe:transition-shadow motion-safe:duration-200 hover:shadow-[0_8px_28px_#00000018]',
   primary:
     'inline-flex items-center justify-center gap-2.5 rounded-[9px] bg-accent px-[17px] py-3 text-[13px] font-bold text-[#102018] transition-colors hover:bg-[#3cdc70] disabled:cursor-not-allowed disabled:opacity-50',
   secondary:

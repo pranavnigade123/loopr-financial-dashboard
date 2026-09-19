@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Search, SlidersHorizontal, X } from 'lucide-react';
 import { ui } from '../../components/ui';
+import { transactionQuerySchema } from '@loopr/contracts';
 
 export function Filters({
   params,
@@ -16,6 +17,12 @@ export function Filters({
   const currentSearch = params.get('search') ?? '';
   const [search, setSearch] = useState(currentSearch);
   const [expanded, setExpanded] = useState(false);
+  const validation = transactionQuerySchema.safeParse(Object.fromEntries(params));
+  const issues = validation.success
+    ? {}
+    : Object.fromEntries(
+        validation.error.issues.map((issue) => [String(issue.path[0]), issue.message]),
+      );
   useEffect(() => {
     setSearch(currentSearch);
   }, [currentSearch]);
@@ -119,44 +126,67 @@ export function Filters({
             <input
               className={ui.input}
               type="date"
+              aria-invalid={!!issues.dateFrom}
               value={params.get('dateFrom') ?? ''}
               max={params.get('dateTo') ?? undefined}
               onChange={(event) => update('dateFrom', event.target.value)}
             />
+            {issues.dateFrom && <span className="text-rose-300">Enter a valid start date.</span>}
           </label>
           <label className="flex flex-col gap-2 text-xs text-muted">
             Through date (UTC)
             <input
               className={ui.input}
               type="date"
+              aria-invalid={!!issues.dateTo}
+              aria-describedby={issues.dateTo ? 'date-range-error' : undefined}
               value={params.get('dateTo') ?? ''}
               min={params.get('dateFrom') ?? undefined}
               onChange={(event) => update('dateTo', event.target.value)}
             />
+            {issues.dateTo && (
+              <span id="date-range-error" className="text-rose-300">
+                {issues.dateTo}
+              </span>
+            )}
           </label>
           <label className="flex flex-col gap-2 text-xs text-muted">
             Minimum amount (USD)
             <input
               className={ui.input}
               type="number"
+              aria-invalid={!!issues.amountMin}
+              aria-describedby={issues.amountMin ? 'minimum-error' : undefined}
               min="0"
               step="0.01"
               placeholder="0.00"
               value={params.get('amountMin') ?? ''}
               onChange={(event) => update('amountMin', event.target.value)}
             />
+            {issues.amountMin && (
+              <span id="minimum-error" className="text-rose-300">
+                Enter a nonnegative amount with at most two decimal places.
+              </span>
+            )}
           </label>
           <label className="flex flex-col gap-2 text-xs text-muted">
             Maximum amount (USD)
             <input
               className={ui.input}
               type="number"
+              aria-invalid={!!issues.amountMax}
+              aria-describedby={issues.amountMax ? 'maximum-error' : undefined}
               min="0"
               step="0.01"
               placeholder="No maximum"
               value={params.get('amountMax') ?? ''}
               onChange={(event) => update('amountMax', event.target.value)}
             />
+            {issues.amountMax && (
+              <span id="maximum-error" className="text-rose-300">
+                Enter an amount at least equal to the minimum, with at most two decimal places.
+              </span>
+            )}
           </label>
         </fieldset>
       )}

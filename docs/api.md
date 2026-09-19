@@ -2,16 +2,19 @@
 
 Local API base URL: `http://localhost:3000/api`. Development frontend proxies `/api` to this server. All JSON responses are non-cacheable. Amounts use integer minor units. Production uses HTTPS.
 
-| Method | Path            | Authentication | Purpose                                                |
-| ------ | --------------- | -------------- | ------------------------------------------------------ |
-| GET    | `/health/live`  | Public         | Process health                                         |
-| GET    | `/health/ready` | Public         | Database connectivity; 503 if unavailable              |
-| POST   | `/auth/login`   | Public         | Login with `email` and `password`; sets session cookie |
-| GET    | `/auth/me`      | Session cookie | Current analyst identity                               |
-| POST   | `/auth/logout`  | Session cookie | Revoke session and clear cookie; returns 204           |
-| GET    | `/transactions` | Session cookie | Paginated transactions, newest first                   |
+| Method | Path             | Authentication | Purpose                                                   |
+| ------ | ---------------- | -------------- | --------------------------------------------------------- |
+| GET    | `/health/live`   | Public         | Process health                                            |
+| GET    | `/health/ready`  | Public         | Database connectivity; 503 if unavailable                 |
+| POST   | `/auth/login`    | Public         | Login with `email` and `password`; sets session cookie    |
+| POST   | `/auth/register` | Public         | Create an analyst account; returns 201 without signing in |
+| GET    | `/auth/me`       | Session cookie | Current analyst identity                                  |
+| POST   | `/auth/logout`   | Session cookie | Revoke session and clear cookie; returns 204              |
+| GET    | `/transactions`  | Session cookie | Paginated transactions, newest first                      |
 
 Send `X-Requested-With: loopr` for POST requests, and `Content-Type: application/json` when a JSON body is present. Logout has no body. The browser automatically supplies Origin; if present, it must match APP_ORIGIN. Postman uses its cookie jar for the JWT session; no token needs to be copied into a collection variable.
+
+Registration accepts `name` (2–80 characters after trimming), `email`, and `password` (12–256 characters). Email is normalized to lowercase. Duplicate emails return 409 `ACCOUNT_EXISTS`; invalid input returns 400. Registration is limited to five requests per minute per observed IP. New accounts access the shared sample company dataset. Email verification and password recovery are not implemented. After registration, use `/auth/login` to start a session.
 
 Login body:
 
@@ -76,5 +79,7 @@ Allowed columns: `id`, `date`, `amount`, `category`, `status`, `userId`. Select 
 Errors use `{ "error": { "code": "INVALID_REQUEST", "message": "...", "requestId": "..." } }`. Expected statuses: 400 invalid input, 401 absent/invalid/expired/revoked session, 403 rejected request origin/header, 429 rate limit, 500 internal failure. Login is limited to five attempts per minute per observed client IP. Repeated Postman runs may reach that limit.
 
 ## Postman
+
+For registration, import `postman/registration.json` and use the same environment. Run its four requests together to create a generated analyst, reject a duplicate, log in, and log out. Each run adds one persistent test account to the selected database; use a development database. The main collection remains usable with the seeded demo account.
 
 Import both files in `postman/`, select the local environment, and enter the demo password as a local secret value. Run the collection in order. It checks login, identity, paging, combined filters, analytics, search, configurable CSV, invalid requests, logout, and rejection after logout. Cookie persistence must be enabled. Do not export credentials when sharing the collection/environment. The collection was executed against an isolated local instance: 14 requests and 23 assertions passed. The runner is not a required application dependency; Postman's Collection Runner can execute the supplied files.

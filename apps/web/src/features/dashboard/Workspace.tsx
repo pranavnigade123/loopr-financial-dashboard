@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
+import { ErrorBoundary } from '../../components/ErrorBoundary';
+import { useNavigationFocus } from '../../components/useNavigationFocus';
 import {
   Bell,
   ChartNoAxesCombined,
@@ -13,7 +16,7 @@ import {
   X,
 } from 'lucide-react';
 import type { SessionUser } from '@loopr/contracts';
-import { api, RequestError } from '../../api';
+import { api, errorMessage, RequestError } from '../../api';
 import { Brand } from '../../components/Brand';
 import { ui } from '../../components/ui';
 import { useDashboard } from './useDashboard';
@@ -39,94 +42,106 @@ const navigation = [
   { path: '/settings', label: 'Setting', icon: Settings },
 ] as const;
 
-type RoutePath = (typeof navigation)[number]['path'];
 const routePaths = new Set<string>(navigation.map((item) => item.path));
 
-function routeFromLocation(): RoutePath {
-  return routePaths.has(window.location.pathname)
-    ? (window.location.pathname as RoutePath)
-    : '/dashboard';
-}
-
-function defaultQuery() {
-  const params = new URLSearchParams(window.location.search);
-  if (!params.has('pageSize')) params.set('pageSize', '10');
-  return params.toString();
-}
-
-export function Workspace({ user, onLogout }: { user: SessionUser; onLogout: () => void }) {
-  const [route, setRoute] = useState<RoutePath>(routeFromLocation);
-  const [query, setQuery] = useState(defaultQuery);
+export function Workspace({
+  user,
+  onLogout,
+  onExpired,
+}: {
+  user: SessionUser;
+  onLogout: () => void;
+  onExpired: () => void;
+}) {
+  const location = useLocation();
+  const route = location.pathname;
+  const routerNavigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const query = useMemo(() => {
+    const params = new URLSearchParams(searchParams);
+    if (!params.has('pageSize')) params.set('pageSize', '10');
+    return params.toString();
+  }, [searchParams]);
+  const setQuery = useCallback(
+    (next: string | ((current: string) => string)) => {
+      setSearchParams((current) => (typeof next === 'string' ? next : next(current.toString())));
+    },
+    [setSearchParams],
+  );
   const [mobileOpen, setMobileOpen] = useState(false);
+  const sidebar = useRef<HTMLElement>(null);
+  const closeNavigation = useCallback(() => setMobileOpen(false), []);
+  useNavigationFocus(mobileOpen, sidebar, closeNavigation);
   const [headerSearch, setHeaderSearch] = useState(
     () => new URLSearchParams(window.location.search).get('search') ?? '',
   );
   const params = useMemo(() => new URLSearchParams(query), [query]);
-  const { data, loading, error, retry } = useDashboard(query, onLogout);
+  const { data, loading, refreshing, error, ready, retry } = useDashboard(query, onExpired);
   const [logoutError, setLogoutError] = useState('');
   const [loggingOut, setLoggingOut] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => {
-    window.history.replaceState(null, '', `${route}${query ? `?${query}` : ''}`);
-  }, [query, route]);
-
+    setHeaderSearch(new URLSearchParams(query).get('search') ?? '');
+  }, [query]);
   useEffect(() => {
-    const listener = () => {
-      setRoute(routeFromLocation());
-      setQuery(defaultQuery());
-      setMobileOpen(false);
-    };
-    window.addEventListener('popstate', listener);
-    return () => window.removeEventListener('popstate', listener);
-  }, []);
+    setMobileOpen(false);
+    setExportOpen(false);
+  }, [location.key]);
 
   const navigate = useCallback(
     (path: string) => {
       if (!routePaths.has(path)) return;
-      const next = path as RoutePath;
-      window.history.pushState(null, '', `${next}${query ? `?${query}` : ''}`);
-      setRoute(next);
+      routerNavigate(`${path}?${query}`);
       setMobileOpen(false);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: 'instant' });
     },
-    [query],
+    [query, routerNavigate],
   );
 
-  const update = useCallback((key: string, value: string) => {
-    setQuery((current) => {
-      const next = new URLSearchParams(current);
-      if (value) next.set(key, value);
-      else next.delete(key);
-      if (key !== 'page') next.set('page', '1');
-      return next.toString();
-    });
-    if (key === 'search') setHeaderSearch(value);
-  }, []);
+  const update = useCallback(
+    (key: string, value: string) => {
+      setQuery((current) => {
+        const next = new URLSearchParams(current);
+        if (value) next.set(key, value);
+        else next.delete(key);
+        if (key !== 'page') next.set('page', '1');
+        return next.toString();
+      });
+      if (key === 'search') setHeaderSearch(value);
+    },
+    [setQuery],
+  );
 
   const clear = useCallback(() => {
     setQuery('pageSize=10');
     setHeaderSearch('');
-  }, []);
+  }, [setQuery]);
 
-  const sort = useCallback((column: string) => {
-    setQuery((current) => {
-      const next = new URLSearchParams(current);
-      const direction =
-        (next.get('sortBy') ?? 'date') === column && (next.get('sortOrder') ?? 'desc') === 'asc'
-          ? 'desc'
-          : 'asc';
-      next.set('sortBy', column);
-      next.set('sortOrder', direction);
-      next.set('page', '1');
-      return next.toString();
-    });
-  }, []);
+  const sort = useCallback(
+    (column: string) => {
+      setQuery((current) => {
+        const next = new URLSearchParams(current);
+        const direction =
+          (next.get('sortBy') ?? 'date') === column && (next.get('sortOrder') ?? 'desc') === 'asc'
+            ? 'desc'
+            : 'asc';
+        next.set('sortBy', column);
+        next.set('sortOrder', direction);
+        next.set('page', '1');
+        return next.toString();
+      });
+    },
+    [setQuery],
+  );
 
   function search(event: FormEvent) {
     event.preventDefault();
-    update('search', headerSearch.trim());
-    navigate('/transactions');
+    const next = new URLSearchParams(query);
+    if (headerSearch.trim()) next.set('search', headerSearch.trim());
+    else next.delete('search');
+    next.set('page', '1');
+    routerNavigate(`/transactions?${next}`);
   }
 
   async function logout() {
@@ -137,7 +152,7 @@ export function Workspace({ user, onLogout }: { user: SessionUser; onLogout: () 
       onLogout();
     } catch (cause) {
       if (cause instanceof RequestError && cause.status === 401) onLogout();
-      else setLogoutError('Unable to sign out. Please try again.');
+      else setLogoutError(`Unable to sign out. ${errorMessage(cause)}`);
     } finally {
       setLoggingOut(false);
     }
@@ -149,18 +164,25 @@ export function Workspace({ user, onLogout }: { user: SessionUser; onLogout: () 
     .join('')
     .slice(0, 2)
     .toUpperCase();
-  const title = navigation.find((item) => item.path === route)?.label ?? 'Dashboard';
+  const title = navigation.find((item) => item.path === route)?.label ?? 'Page not found';
   const pageProps = {
     data,
     loading,
     query: { params, update, clear, sort },
     onNavigate: navigate,
-    onExport: () => setExportOpen(true),
+    onExport: () => {
+      if (ready) setExportOpen(true);
+    },
   };
 
   return (
     <div className="flex min-h-dvh bg-panel">
       <aside
+        ref={sidebar}
+        id="main-navigation"
+        role={mobileOpen ? 'dialog' : undefined}
+        aria-modal={mobileOpen ? true : undefined}
+        aria-label="Workspace navigation"
         className={`fixed inset-y-0 left-0 z-30 flex w-[min(288px,86vw)] flex-col bg-panel px-[30px] py-7 transition-transform duration-200 min-[821px]:visible min-[821px]:w-[268px] min-[821px]:translate-x-0 min-[821px]:py-[38px] ${mobileOpen ? 'visible translate-x-0' : 'invisible -translate-x-[105%] min-[821px]:visible'}`}
       >
         <div className="flex items-center justify-between">
@@ -175,19 +197,15 @@ export function Workspace({ user, onLogout }: { user: SessionUser; onLogout: () 
         </div>
         <nav aria-label="Main navigation" className="mt-[62px] flex flex-col gap-[9px]">
           {navigation.map(({ path, label, icon: Icon }) => (
-            <a
+            <Link
               key={path}
-              href={path}
+              to={`${path}?${query}`}
               className={`relative flex min-h-[55px] items-center gap-5 rounded-[11px] px-4 text-sm font-medium no-underline transition-colors hover:bg-[#22252c] hover:text-white ${route === path ? 'text-accent after:absolute after:right-[-30px] after:h-[31px] after:w-2 after:rounded-l-lg after:bg-expense' : 'text-[#9a9ba1]'}`}
               aria-current={route === path ? 'page' : undefined}
-              onClick={(event) => {
-                event.preventDefault();
-                navigate(path);
-              }}
             >
               <Icon size={21} strokeWidth={1.8} />
               <span>{label}</span>
-            </a>
+            </Link>
           ))}
         </nav>
         <div className="mt-auto flex items-center gap-2 border-t border-[#292c33] pt-6">
@@ -221,12 +239,14 @@ export function Workspace({ user, onLogout }: { user: SessionUser; onLogout: () 
         />
       )}
 
-      <div className="min-w-0 flex-1 bg-canvas min-[821px]:ml-[268px]">
+      <div inert={mobileOpen} className="min-w-0 flex-1 bg-canvas min-[821px]:ml-[268px]">
         <header className="sticky top-0 z-20 flex h-[78px] items-center justify-between bg-panel px-5 min-[821px]:h-24 min-[821px]:px-[38px]">
           <div className="flex items-center gap-3.5">
             <button
               className="grid place-items-center border-0 bg-transparent text-[#a6a8ae] min-[821px]:hidden"
               aria-label="Open navigation"
+              aria-expanded={mobileOpen}
+              aria-controls="main-navigation"
               onClick={() => setMobileOpen(true)}
             >
               <Menu />
@@ -246,6 +266,7 @@ export function Workspace({ user, onLogout }: { user: SessionUser; onLogout: () 
               </label>
               <input
                 id="global-search"
+                maxLength={100}
                 placeholder="Search..."
                 value={headerSearch}
                 onChange={(event) => setHeaderSearch(event.target.value)}
@@ -276,10 +297,30 @@ export function Workspace({ user, onLogout }: { user: SessionUser; onLogout: () 
           </div>
         </header>
 
-        <main className="px-[18px] py-6 min-[821px]:px-[38px] min-[821px]:py-[42px]">
+        <main
+          key={route}
+          className="px-[18px] py-6 motion-safe:animate-page-enter min-[821px]:px-[38px] min-[821px]:py-[42px]"
+          aria-busy={refreshing}
+        >
+          {route === '/' && <Navigate to={`/dashboard?${query}`} replace />}
+          {refreshing && (
+            <div
+              role="status"
+              className="fixed bottom-5 right-5 z-40 flex items-center gap-2 rounded-full border border-white/10 bg-panel px-4 py-2 text-xs text-muted shadow-lg"
+            >
+              <span className="size-2 rounded-full bg-accent motion-safe:animate-pulse" />
+              Updating results…
+            </div>
+          )}
           {(error || logoutError) && (
-            <div className="mb-[22px] flex items-center justify-between gap-4 rounded-[9px] border border-[#79414c] bg-[#42292e] px-[15px] py-3 text-[13px] text-[#ffccd3]">
-              <span>{error || logoutError}</span>
+            <div
+              role="alert"
+              className="mb-[22px] flex items-center justify-between gap-4 rounded-[9px] border border-[#79414c] bg-[#42292e] px-[15px] py-3 text-[13px] text-[#ffccd3]"
+            >
+              <span>
+                {error || logoutError}
+                {error && data ? ' Previously loaded results are shown below.' : ''}
+              </span>
               {error && (
                 <button
                   className="border-0 bg-transparent text-[#ffccd3] underline"
@@ -290,23 +331,33 @@ export function Workspace({ user, onLogout }: { user: SessionUser; onLogout: () 
               )}
             </div>
           )}
-          {route === '/dashboard' && <DashboardPage {...pageProps} />}
-          {route === '/transactions' && <TransactionsPage {...pageProps} />}
-          {route === '/wallet' && <WalletPage {...pageProps} />}
-          {route === '/analytics' && <AnalyticsPage {...pageProps} />}
-          {route === '/personal' && <PersonalPage user={user} />}
-          {route === '/messages' && <MessagesPage data={data} />}
-          {route === '/settings' && <SettingsPage />}
-          {!routePaths.has(route) && <EmptyState />}
+          <ErrorBoundary key={route} label={title}>
+            {route === '/dashboard' && <DashboardPage {...pageProps} />}
+            {route === '/transactions' && <TransactionsPage {...pageProps} loading={!ready} />}
+            {route === '/wallet' && <WalletPage {...pageProps} />}
+            {route === '/analytics' && <AnalyticsPage {...pageProps} />}
+            {route === '/personal' && <PersonalPage user={user} />}
+            {route === '/messages' && <MessagesPage data={data} />}
+            {route === '/settings' && <SettingsPage />}
+            {!routePaths.has(route) && route !== '/' && (
+              <>
+                <EmptyState />
+                <Link className={ui.secondary} to="/dashboard">
+                  Back to dashboard
+                </Link>
+              </>
+            )}
+          </ErrorBoundary>
         </main>
       </div>
 
-      {exportOpen && data?.transactions && (
+      {exportOpen && ready && data?.transactions && (
         <ExportDialog
           query={query}
           total={data.transactions.total}
           preview={data.transactions.items}
           onClose={() => setExportOpen(false)}
+          onUnauthorized={onExpired}
         />
       )}
     </div>

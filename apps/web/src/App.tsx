@@ -8,6 +8,10 @@ import { Workspace } from './features/dashboard/Workspace';
 export function App() {
   const [user, setUser] = useState<SessionUser | null>(null);
   const clearUser = useCallback(() => setUser(null), []);
+  const expireUser = useCallback(() => {
+    setUser(null);
+    setError('Your session has expired. Sign in to continue where you left off.');
+  }, []);
   const [checking, setChecking] = useState(true);
   const [error, setError] = useState('');
   useEffect(() => {
@@ -31,7 +35,7 @@ export function App() {
       </main>
     );
   return user ? (
-    <Workspace user={user} onLogout={clearUser} />
+    <Workspace user={user} onLogout={clearUser} onExpired={expireUser} />
   ) : (
     <>
       {error && (

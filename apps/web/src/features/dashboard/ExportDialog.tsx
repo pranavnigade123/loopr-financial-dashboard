@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Download, X } from 'lucide-react';
 import { exportColumns, type ExportColumn, type Transaction } from '@loopr/contracts';
 import { money, displayDate } from './format';
 import { ui } from '../../components/ui';
+import { request, errorMessage, RequestError } from '../../api';
 
 const labels: Record<ExportColumn, string> = {
   id: 'Transaction ID',
@@ -17,11 +18,13 @@ export function ExportDialog({
   total,
   preview,
   onClose,
+  onUnauthorized,
 }: {
   query: string;
   total: number;
   preview: Transaction[];
   onClose: () => void;
+  onUnauthorized: () => void;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const abort = useRef<AbortController | null>(null);
@@ -53,17 +56,13 @@ export function ExportDialog({
     setError('');
     abort.current = new AbortController();
     try {
-      const response = await fetch('/api/exports', {
+      const response = await request('/exports', {
         method: 'POST',
         credentials: 'same-origin',
         headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'loopr' },
         body: JSON.stringify({ query: Object.fromEntries(new URLSearchParams(query)), columns }),
         signal: abort.current.signal,
       });
-      if (!response.ok) {
-        const body = await response.json();
-        throw new Error(body.error?.message ?? 'Export failed. Please try again.');
-      }
       const url = URL.createObjectURL(await response.blob());
       const link = document.createElement('a');
       link.href = url;
@@ -74,8 +73,10 @@ export function ExportDialog({
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       onClose();
     } catch (cause) {
-      if (!abort.current.signal.aborted)
-        setError(cause instanceof Error ? cause.message : 'Export failed.');
+      if (!abort.current.signal.aborted) {
+        if (cause instanceof RequestError && cause.status === 401) onUnauthorized();
+        else setError(errorMessage(cause));
+      }
     } finally {
       setBusy(false);
     }

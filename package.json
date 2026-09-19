@@ -19,12 +19,15 @@
     "format:check": "prettier --check .",
     "test": "npm run build -w @loopr/contracts && vitest run tests/unit",
     "seed": "npm run build -w @loopr/contracts && npm run seed -w @loopr/api",
+    "reset:demo-password": "npm run build -w @loopr/contracts && tsx apps/api/src/db/reset-password.ts",
     "start": "npm run start -w @loopr/api",
     "check": "npm run lint && npm run typecheck && npm test && npm run build",
-    "test:integration": "npm run build -w @loopr/contracts && vitest run tests/integration"
+    "test:integration": "npm run build -w @loopr/contracts && vitest run tests/integration",
+    "test:browser": "playwright test"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^22.20.3",
     "concurrently": "^10.0.5",
     "eslint": "^10.10.0",

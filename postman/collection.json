@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Penta — Loopr API",
-    "description": "Authenticated financial analytics API. Run in order with cookie persistence enabled. Set demoPassword only in a local environment value. The collection checks filtering, analytics, configurable CSV and session revocation.",
+    "description": "Financial transaction analytics API. Import environment.json and select it before running. Set baseUrl to http://localhost:3000/api for local development, demoEmail to your seeded analyst email, and demoPassword to the locally configured password. Run all 14 requests in order with Postman's cookie jar enabled: Login sets an HttpOnly session cookie; Logout clears and revokes it. No bearer-token variable is needed. Amounts in JSON are integer USD cents; CSV amounts are decimal USD. Dates use UTC. Validation requests intentionally expect HTTP 400; the final request expects HTTP 401. This collection was previously verified locally with 23 passing assertions. A hosted API URL will be provided after deployment. Keep passwords and session cookies out of shared environments and examples.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [

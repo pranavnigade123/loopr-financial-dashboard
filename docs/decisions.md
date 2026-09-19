@@ -2,7 +2,7 @@
 
 ## Architecture
 
-One repository, one frontend, one modular API, and one managed MongoDB database. Fastify provides routing, request injection for integration tests, structured logging, and security plugins. Zod validates external data and shared request contracts. The native MongoDB driver avoids a second overlapping schema abstraction. Business query logic will be shared across transactions, analytics, and CSV exports as those features arrive.
+One repository contains the frontend, API, and shared contracts. Fastify provides routing, request injection for integration tests, structured logging, and security plugins. Zod validates external data and requests. The native MongoDB driver keeps persistence straightforward without duplicating the Zod schemas in an ORM. Transactions, analytics, and CSV exports use the same filter builder.
 
 The frontend and API build independently but deploy together. Serving `/` and `/api/*` from one origin simplifies cookie authentication, avoids CORS configuration, and keeps releases synchronized. Separate deployments remain possible if independent scaling becomes necessary.
 
@@ -11,14 +11,14 @@ The frontend and API build independently but deploy together. Serving `/` and `/
 - Store nonnegative amounts as integer cents (`amountMinor`); derive incoming/outgoing direction from Revenue/Expense.
 - Display USD, explicitly an assumption because the sample does not identify currency.
 - Default analytics period: the supplied 2024 dataset, not the current calendar month.
-- Proposed realized metrics: Paid revenue, Paid expenses, and their difference (net cash flow). Pending transactions are reported separately. Pending values are not cash received or paid.
+- Realized metrics are Paid revenue, Paid expenses, and their difference (net cash flow). Pending transactions are reported separately because they have not settled.
 - Do not label net cash flow as an actual balance or savings balance. Neither opening balances nor savings account data are supplied.
 - Preserve the source statuses Paid and Pending.
-- Use UTC timestamps and UTC calendar boundaries. Future date-range filters will use an inclusive start and exclusive next-day end.
+- Use UTC timestamps and UTC calendar boundaries. Date-range filters use an inclusive start and exclusive next-day end.
 
 ## Identity and sessions
 
-The assignment does not specify registration, roles, or tenant isolation. A separately seeded analyst account can read all company sample transactions. Display the source user IDs as readable identifiers and use deterministic avatars; no invented identities.
+Registration creates analyst accounts with access to the same sample company transactions as the seeded demo account. Accounts are not separate tenants. Email is normalized, a unique database index prevents duplicate accounts, and registration does not sign in automatically. Email verification and password recovery remain outside the current implementation. Source transaction user IDs are distinct from analyst accounts.
 
 Passwords use salted Node.js scrypt hashes. JWTs have a one-hour lifetime, fixed algorithm, issuer and audience, and are stored in an HttpOnly, SameSite=Strict cookie scoped to `/api` (Secure in production). A MongoDB session record allows immediate logout revocation; expiry is checked on every request independently of TTL cleanup. Browser writes require an exact allowed Origin and a custom header; non-browser clients must also send the custom header. No CORS policy is enabled.
 
@@ -31,5 +31,5 @@ The initial API uses process-local rate limiting, suitable for one application i
 - Shared types do not replace runtime validation at untrusted boundaries.
 - Seed upserts are repeatable but not a multi-document transaction. The full dataset is validated before any writes, and rerunning repairs an interrupted seed.
 - No automatic database seeding at server startup.
-- No payment execution, wallets, messages, signup, or user administration are implied by decorative Figma navigation.
-- CSV exports will contain all matching records, not only the visible page. Column selection and filter semantics must be applied server-side.
+- Sidebar destinations extend the single supplied dashboard design. Wallet is a cash-flow summary; Messages shows system notices. Bank connections, money transfers, chat, and account editing are outside scope.
+- CSV exports contain all matching records, not only the visible page. The server validates column selection and applies the same filters as the table.

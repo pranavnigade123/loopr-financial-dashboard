@@ -8,7 +8,8 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
 import { ZodError } from 'zod';
-import { loginSchema } from '@loopr/contracts';
+import { loginSchema, registerSchema } from '@loopr/contracts';
+import { MongoServerError } from 'mongodb';
 import type { Config } from './config.js';
 import type { Database } from './db/database.js';
 import { hashPassword, verifyPassword } from './modules/auth/password.js';
@@ -46,7 +47,11 @@ export async function buildApp(config: Config, db: Database) {
     sign: { iss: 'loopr-api', aud: 'loopr-web', expiresIn: SESSION_SECONDS },
     verify: { allowedIss: 'loopr-api', allowedAud: 'loopr-web', algorithms: ['HS256'] },
   });
-  await app.register(rateLimit, { max: 120, timeWindow: '1 minute' });
+  await app.register(rateLimit, {
+    max: 120,
+    timeWindow: '1 minute',
+    allowList: (request) => !request.url.startsWith('/api/'),
+  });
   const dummyHash = await hashPassword(randomUUID());
 
   app.setErrorHandler((error, request, reply) => {
@@ -77,7 +82,17 @@ export async function buildApp(config: Config, db: Database) {
             : status === 429
               ? 'Too many requests. Please try again shortly.'
               : 'Something went wrong. Please try again.';
-    return reply.code(status).send({ error: { code, message, requestId: request.id } });
+    const fields =
+      error instanceof ZodError
+        ? Object.fromEntries(
+            error.issues
+              .filter((issue) => issue.path.length)
+              .map((issue) => [issue.path.join('.'), issue.message]),
+          )
+        : undefined;
+    return reply
+      .code(status)
+      .send({ error: { code, message, requestId: request.id, ...(fields ? { fields } : {}) } });
   });
 
   // A custom header plus exact Origin validation protects cookie-authenticated writes.
@@ -109,6 +124,38 @@ export async function buildApp(config: Config, db: Database) {
       return reply.code(503).send({ status: 'unavailable' });
     }
   });
+
+  app.post(
+    '/api/auth/register',
+    { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } },
+    async (request, reply) => {
+      const input = registerSchema.parse(request.body);
+      const user = {
+        id: randomUUID(),
+        email: input.email,
+        name: input.name,
+        passwordHash: await hashPassword(input.password),
+      };
+      try {
+        await db.users.insertOne(user);
+      } catch (error) {
+        // The unique email index also handles concurrent registration attempts.
+        if (error instanceof MongoServerError && error.code === 11000) {
+          return reply.code(409).send({
+            error: {
+              code: 'ACCOUNT_EXISTS',
+              message: 'An account already exists for this email. Please sign in.',
+              requestId: request.id,
+            },
+          });
+        }
+        throw error;
+      }
+      // Registration does not issue a session: a successful response means the
+      // account is persisted, even if a subsequent login request fails.
+      return reply.code(201).send({ user: { id: user.id, email: user.email, name: user.name } });
+    },
+  );
 
   app.post(
     '/api/auth/login',

@@ -62,6 +62,13 @@ afterAll(async () => {
 });
 
 describe('authenticated API against real MongoDB', () => {
+  it('does not let page requests exhaust the API rate limit', async () => {
+    for (let count = 0; count < 125; count++) {
+      const page = await app.inject({ url: '/dashboard', headers: { accept: 'text/html' } });
+      expect(page.statusCode).not.toBe(429);
+    }
+    expect((await app.inject('/api/health/ready')).statusCode).toBe(200);
+  });
   it('checks readiness and protects transaction data', async () => {
     expect((await app.inject('/api/health/ready')).statusCode).toBe(200);
     expect((await app.inject('/api/transactions')).statusCode).toBe(401);

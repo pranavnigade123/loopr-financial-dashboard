@@ -1,0 +1,117 @@
+{
+  "info": {
+    "name": "Penta — Registration",
+    "description": "Optional account-creation flow. Select the Penta local environment. Each run creates one persistent analyst account in the target database; use a development database. Temporary credentials are generated in runner-local variables and are not saved in the collection. Run all requests in order with cookies enabled. This collection does not change the seeded demo credentials.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create analyst",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.variables.set('registrationEmail', 'analyst-' + pm.variables.replaceIn('{{$guid}}') + '@example.com');",
+              "pm.variables.set('registrationPassword', pm.variables.replaceIn('{{$guid}}'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Account created', () => pm.response.to.have.status(201));",
+              "pm.test('Only public identity returned', () => { const user = pm.response.json().user; pm.expect(user.email).to.eql(pm.variables.get('registrationEmail')); pm.expect(user).not.to.have.property('passwordHash'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Requested-With", "value": "loopr" }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Postman Analyst\",\n  \"email\": \"{{registrationEmail}}\",\n  \"password\": \"{{registrationPassword}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        }
+      }
+    },
+    {
+      "name": "Reject duplicate account",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('Duplicate email rejected', () => pm.response.to.have.status(409));"]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Requested-With", "value": "loopr" }
+        ],
+        "url": "{{baseUrl}}/auth/register",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"Postman Analyst\",\n  \"email\": \"{{registrationEmail}}\",\n  \"password\": \"{{registrationPassword}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        }
+      }
+    },
+    {
+      "name": "Login as new analyst",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": ["pm.test('New account can sign in', () => pm.response.to.have.status(200));"]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" },
+          { "key": "X-Requested-With", "value": "loopr" }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{registrationEmail}}\",\n  \"password\": \"{{registrationPassword}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        }
+      }
+    },
+    {
+      "name": "Logout new analyst",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Session closed', () => pm.response.to.have.status(204));",
+              "pm.variables.unset('registrationEmail'); pm.variables.unset('registrationPassword');"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "X-Requested-With", "value": "loopr" }],
+        "url": "{{baseUrl}}/auth/logout"
+      }
+    }
+  ]
+}

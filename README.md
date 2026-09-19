@@ -1,10 +1,12 @@
 # Penta — Loopr financial analytics
 
-A TypeScript financial dashboard built for the Loopr assignment. One npm-workspaces repository contains a React frontend, Fastify REST API, and shared contracts. Production serves the frontend and API from one Azure App Service origin; MongoDB Atlas stores data.
+A financial dashboard for exploring company transactions, comparing revenue and expenses, and exporting reports. Built with React, Tailwind CSS, Fastify, TypeScript, and MongoDB Atlas in one npm-workspaces repository.
 
 ## Current status
 
-The application includes login/logout, revocable JWT sessions, repeatable sample-data seeding, financial charts and metrics, server-side filtering/search/sorting/pagination, and configurable CSV downloads. A responsive Tailwind CSS application shell follows the supplied dark dashboard reference and provides separate Dashboard, Transactions, Wallet, Analytics, Personal, Messages, and Settings routes. The project is published on GitHub; Azure infrastructure files are preparation for deployment and are not evidence of a completed cloud release.
+Implemented: account registration, cookie-based authentication, transaction search and combined filters, stable sorting and pagination, financial charts, and CSV exports with selectable columns. New accounts access the shared sample workspace. Email verification and password recovery are not yet available. The responsive UI has separate Dashboard, Transactions, Wallet, Analytics, Personal, Messages, and Settings routes.
+
+Wallet summarizes cash flow; it does not connect to a bank. Personal and Settings display account information and fixed reporting defaults. Messages contains system notices rather than person-to-person messaging. Azure deployment is pending; infrastructure and a manual release workflow are included.
 
 ## Run locally
 
@@ -19,19 +21,25 @@ Requirements: Node.js 22.13+ and MongoDB (local or Atlas). Use a dedicated `loop
 
 For Atlas, allow your current IP in Network Access and use the database user's credentials, not your Atlas account password. Percent-encode reserved characters in the username/password. Keep the URI quoted in `.env`.
 
+If the demo account already exists, changing `.env` alone does not change its password. Run `npm run reset:demo-password` explicitly to apply `DEMO_PASSWORD` to that account and revoke its existing sessions.
+
 ## Commands
 
-| Command                    | Purpose                                            |
-| -------------------------- | -------------------------------------------------- |
-| `npm run dev`              | Watch shared contracts, API, and frontend          |
-| `npm run seed`             | Validate and seed the supplied dataset             |
-| `npm run check`            | Lint, type-check, unit tests, production build     |
-| `npm run test:integration` | Authentication and pagination against real MongoDB |
-| `npm run format:check`     | Verify formatting                                  |
-| `npm run build`            | Compile all workspaces                             |
-| `npm start`                | Serve compiled frontend and API on `PORT`          |
+| Command                       | Purpose                                                        |
+| ----------------------------- | -------------------------------------------------------------- |
+| `npm run dev`                 | Watch shared contracts, API, and frontend                      |
+| `npm run seed`                | Validate and seed the supplied dataset                         |
+| `npm run check`               | Lint, type-check, unit tests, production build                 |
+| `npm run test:integration`    | Authentication and pagination against real MongoDB             |
+| `npm run test:browser`        | Chromium tests against an isolated local database              |
+| `npm run reset:demo-password` | Update the existing demo account from local environment values |
+| `npm run format:check`        | Verify formatting                                              |
+| `npm run build`               | Compile all workspaces                                         |
+| `npm start`                   | Serve compiled frontend and API on `PORT`                      |
 
 Integration tests use `MONGODB_TEST_URI` (default `mongodb://127.0.0.1:27018`). They create a randomly named `loopr_test_*` database and remove only that database afterward. Use a local test MongoDB, never production. `docker compose -f compose.test.yml up -d` starts one on port 27018.
+
+For browser tests, start that local MongoDB, run `npx playwright install chromium`, then `npm run build` and `npm run test:browser`. The fixture serves the compiled application on port 3003 with a separate random database and never reads `.env`. Tests cover registration, login/logout, navigation/history, filters, CSV contents, failed requests, session expiry, and mobile keyboard navigation. CI runs these checks and retains failure traces for seven days.
 
 For a local production-build preview, set `APP_ORIGIN=http://localhost:3000`, run `npm run build`, then `npm start`. Keep `NODE_ENV=development` for HTTP localhost; production requires HTTPS and secure cookies.
 
@@ -45,10 +53,14 @@ data              Original assignment dataset
 postman           Collection and environment template
 tests             Unit and real-database integration checks
 infra             Azure Bicep template
-docs              Decisions, API, delivery plan, deployment guide
+docs              Architecture, engineering decisions, API reference
 ```
 
 See [architecture](docs/architecture.md), [decisions](docs/decisions.md), and [API usage](docs/api.md).
+
+## API collection
+
+Import [the Postman collection](postman/collection.json) and [environment template](postman/environment.json). Set the environment's `demoPassword` locally, select it, and run the collection in order. The 14 requests cover authentication, filters, analytics, exports, validation errors, and logout. See [API usage](docs/api.md#postman) for setup details.
 
 ## Data and design assumptions
 

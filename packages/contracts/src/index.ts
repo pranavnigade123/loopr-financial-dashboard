@@ -29,6 +29,21 @@ export const loginSchema = z
   })
   .strict();
 
+export const registerSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .min(2, 'Enter at least 2 characters.')
+      .max(80, 'Use at most 80 characters.'),
+    email: z.string().trim().toLowerCase().pipe(z.email('Enter a valid email address.')),
+    password: z
+      .string()
+      .min(12, 'Use at least 12 characters.')
+      .max(256, 'Use at most 256 characters.'),
+  })
+  .strict();
+
 export const transactionQuerySchema = z
   .object({
     page: z.coerce.number().int().min(1).max(10000).default(1),
@@ -54,14 +69,14 @@ export const transactionQuerySchema = z
     sortOrder: z.enum(['asc', 'desc']).default('desc'),
   })
   .strict()
-  .refine(
-    (q) => !q.dateFrom || !q.dateTo || q.dateFrom <= q.dateTo,
-    'Start date must precede end date',
-  )
-  .refine(
-    (q) => !q.amountMin || !q.amountMax || Number(q.amountMin) <= Number(q.amountMax),
-    'Minimum amount must not exceed maximum',
-  );
+  .refine((q) => !q.dateFrom || !q.dateTo || q.dateFrom <= q.dateTo, {
+    message: 'End date must be on or after the start date.',
+    path: ['dateTo'],
+  })
+  .refine((q) => !q.amountMin || !q.amountMax || Number(q.amountMin) <= Number(q.amountMax), {
+    message: 'Maximum amount must be at least the minimum.',
+    path: ['amountMax'],
+  });
 
 export type TransactionQuery = z.infer<typeof transactionQuerySchema>;
 export const exportColumns = ['id', 'date', 'amount', 'category', 'status', 'userId'] as const;
@@ -118,5 +133,5 @@ export interface TransactionPage {
   pageSize: number;
 }
 export interface ApiError {
-  error: { code: string; message: string; requestId: string };
+  error: { code: string; message: string; requestId: string; fields?: Record<string, string> };
 }
